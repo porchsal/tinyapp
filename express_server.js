@@ -55,9 +55,9 @@ app.get("/urls.json", (req, res) => {
   });
 
   app.post("/urls/:id/delete", (req,res) => {
-    const templateVars = { id: req.params.id, longURL: urlDatabase.id };
-    console.log(templateVars);
-    //delete urlDatabase[req.params.id];
+    //const idURL = req.params.id;
+    //console.log(req.params);
+    delete urlDatabase[req.params.id];
     res.redirect("/urls");
   })
 
