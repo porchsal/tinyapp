@@ -65,4 +65,9 @@ app.get("/urls.json", (req, res) => {
     res.render("urls_show", templateVars);
     
   })
+
+  app.post("/urls/:id/edit", (req,res) => {
+    
+    res.redirect("/urls");
+  })
   
