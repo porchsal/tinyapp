@@ -26,12 +26,12 @@
       <div class="card text-center">
         <div class="card-body">
             <h3>Edit</h3>
-            <form class="form-inline" action="/urls/update" method="POST">
+            <form class="form-inline" action="/urls/:id/edit" method="POST">
                 <div class="form-group mb-2" >
-                    <label for="longURL">New URL</label>
+                    <label for="longURL">Update URL</label>
                     <input
                       class="form-control"
-                      type="text"
+                      type="text "
                       name="longURL"
                       placeholder="http://"
                       style="width:300px; margin: 1em;"
