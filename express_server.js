@@ -70,4 +70,12 @@ app.get("/urls.json", (req, res) => {
     
     res.redirect("/urls");
   })
+
+  app.post("/login", (req, res) => {
+    const user = req.body.username;
+    console.log(user);
+    res.cookie(user);
+    
+    res.redirect("urls")
+  })
   
