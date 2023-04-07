@@ -15,6 +15,11 @@ const urlDatabase = {
 
 };
 
+const users = {
+  "my@email.com": "abcd",
+  "your@email.com": "dcab"
+}
+
 const generateRandomString = function(){
     return Math.random().toString(20).slice(2, 8);
 }
@@ -39,7 +44,7 @@ app.get("/urls.json", (req, res) => {
   app.get("/urls", (req, res) => {
     const templateVars = {
         username: req.cookies["username"],
-        urls: urlDatabase
+        urls: users
     };
     res.render("urls_index", templateVars);
   });
@@ -85,10 +90,27 @@ app.get("/urls.json", (req, res) => {
     res.redirect("/urls");
   })
 
-  app.post("/login", (req, res) => {
-    const username = req.body.username;
-    res.cookie("username", username);
-    res.redirect("urls");
+  // app.post("/login", (req, res) => {
+  //   const username = req.body.username;
+  //   res.cookie("username", username);
+  //   res.redirect("urls");
+  // })
+
+  //go to registration page
+  app.get("/registration", (req,res) => {
+    const templateVars = {
+      username: req.cookies["username"]
+    };
+    res.render("urls_registration", templateVars);
+  });
+  
+  //users registration
+  app.post("/registration", (req,res) => {
+    const user = req.body.email;
+    const pswd = req.body.password;
+    console.log(user, pswd);
+    users[user] = pswd;
+    //res.redirect("urls")
   })
 
   app.post("/logout", (req,res) => {
