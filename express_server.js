@@ -61,7 +61,7 @@ app.get("/urls.json", (req, res) => {
 
   app.get("/urls", (req, res) => {
     const templateVars = {
-        user: req.cookies["emailID"],
+        user: req.cookies["user"],
         urls: urlDatabase
     };
     res.render("urls_index", templateVars);
@@ -69,7 +69,7 @@ app.get("/urls.json", (req, res) => {
 
   app.get("/urls/new", (req,res) => {
     const templateVars = {
-      user: req.cookies["emailID"],
+      user: req.cookies["user"],
       
   };
     res.render("urls_new", templateVars);
@@ -96,7 +96,7 @@ app.get("/urls.json", (req, res) => {
     const templateVars = { 
       id: req.params.id, 
       longURL: urlDatabase[req.params.id],
-      user: req.cookies["emailID"]
+      user: req.cookies["user"]
      };
     const longURL = urlDatabase.id;
     res.render("urls_show", templateVars);
@@ -110,7 +110,7 @@ app.get("/urls.json", (req, res) => {
 
   app.get("/login", (req,res) => {
     const templateVars = {
-      user: req.cookies["emailID"]
+      user: req.cookies["user"]
     };
     res.render("urls_login", templateVars);
   })
@@ -122,37 +122,44 @@ app.get("/urls.json", (req, res) => {
       console.log("undefined");
     
     }else if(emailID.password === pswdID){
-      res.cookie("user", emailID)
+      res.cookie("user", emailID.email)
+      //console.log(emailID.email);
     } 
-    //console.log(emailID, pswdID);emailID.password
+    
    res.redirect("urls");
    })
 
   //go to registration page
   app.get("/register", (req,res) => {
     const templateVars = {
-      user: req.cookies["emailID"]
+      user: req.cookies["user"]
     };
     res.render("urls_register", templateVars);
   });
   
   //users registration
   app.post("/register", (req,res) => {
-    const user = req.body.email;
+    const useremail = req.body.email;
     const pswd = req.body.password;
     const userID = generateRandomString(12);
+    //res.cookie("user", userID);
     users[userID] = {
       id: userID,
-      email: user,
+      email: useremail,
       password: pswd
     }
-    // const templateVars = {
-    //   username: req.cookies[userID]
-    // };
-    res.cookie("user", userID)
-    console.log(users);
+    const templateVars = {
+      user: req.cookies["user"],
+      id: userID,
+      email: useremail,
+      password: pswd,
+      
+    };
+    
+    console.log(templateVars);
     //users[user] = pswd;
-    res.redirect("urls")
+    res.render("urls_login", templateVars);
+    //res.redirect("urls");
   })
 
   app.post("/logout", (req,res) => {
