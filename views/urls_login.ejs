@@ -22,7 +22,28 @@
         <%- include('partials/_header')%>
         <main style="margin: 1em;"></main>
           <h3>Login</h3>
-          
+          <form class="form-group" action="/login" method="POST">
+            <div class="form-group mb-2">
+              <label for="email">email Address:</label>
+              <input 
+                class="form-control mb-2" 
+                type="email" 
+                name="email"
+                placeholder="Enter eMail"
+                style="width: 300px"
+                
+              />
+              <label for="password">Enter password:</label>
+              <input
+                class="form-control mb-2" 
+                type="text"
+                name="password" 
+                placeholder="Enter password"
+                style="width: 300px"
+              />
+              <button type="submit" class="btn btn-primary">Submit</button>
+            </div> 
+          </form>
 
       </body>
 
