@@ -143,11 +143,11 @@ app.get("/urls.json", (req, res) => {
     const pswd = req.body.password;
     const userID = generateRandomString(12);
     //res.cookie("user", userID);
-    users[userID] = {
-      id: userID,
-      email: useremail,
-      password: pswd
-    }
+    // users[userID] = {
+    //   id: userID,
+    //   email: useremail,
+    //   password: pswd
+    // }
     const templateVars = {
       user: req.cookies["user"],
       id: userID,
@@ -155,12 +155,33 @@ app.get("/urls.json", (req, res) => {
       password: pswd,
       
     };
-    
-    console.log(templateVars);
+    if( req.body.email && req.body.password ) {
+      if(!getUserByEmail(req.body.email, users)){
+        const userID = generateRandomString(12);
+        users[userID] = {
+          id: userID,
+          email: useremail,
+          password: pswd
+        };
+        res.cookie("user", userID);
+        res.redirect('/urls');
+      } else {
+        res.status(400).send("Email already used");
+      }
+    } else {
+      res.status(400).send("Empty user name or password");
+    }
+
+
+
+
+
+
+    //console.log(templateVars);
     //users[user] = pswd;
-    res.render("urls_login", templateVars);
+    //res.render("urls_login", templateVars);
     //res.redirect("urls");
-  })
+  });
 
   app.post("/logout", (req,res) => {
     res.clearCookie("user", {path: '/'});
