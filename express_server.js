@@ -58,98 +58,104 @@ app.get("/urls.json", (req, res) => {
   app.get("/hello", (req, res) => {
     res.send("<html><body>Hello <b>World</b></body></html>\n");
   });
-
+//list of urls get
   app.get("/urls", (req, res) => {
     const templateVars = {
-        user: req.cookies["user"],
+        user_id: req.cookies["user_id"],
         urls: urlDatabase
     };
     res.render("urls_index", templateVars);
   });
-
+//new url page get
   app.get("/urls/new", (req,res) => {
     const templateVars = {
-      user: req.cookies["user"],
+      user_id: req.cookies["user_id"],
       
   };
     res.render("urls_new", templateVars);
   })
 
-  app.get("/urls/:id", (req, res) => {
-    const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
-    res.render("urls_show", templateVars);
-  });
-
+// create new tinyurl
   app.post("/urls", (req,res) => {
     const longURL = req.body.longURL;
     const shortURL = generateRandomString(8);
     urlDatabase[shortURL] = longURL;
     res.redirect("/urls");  
   });
+  
+  
+  app.get("/urls/:id", (req, res) => {
+    const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+    res.render("urls_show", templateVars);
+  });
+
+  
 
   app.post("/urls/:id/delete", (req,res) => {
     delete urlDatabase[req.params.id];
     res.redirect("/urls");
   })
-
+// edit url get
   app.get("/urls/:id/edit", (req,res) => {
     const templateVars = { 
       id: req.params.id, 
       longURL: urlDatabase[req.params.id],
-      user: req.cookies["user"]
+      user_id: req.cookies["user_id"]
      };
     const longURL = urlDatabase.id;
     res.render("urls_show", templateVars);
     
   })
-
+// edit url post
   app.post("/urls/:id/edit", (req,res) => {
     
     res.redirect("/urls");
   })
-
+//login page get
   app.get("/login", (req,res) => {
     const templateVars = {
-      user: req.cookies["user"]
+      user_id: req.cookies["user_id"]
     };
     res.render("urls_login", templateVars);
   })
-
+//login page post
    app.post("/login", (req, res) => {
-    const emailID = getUserByEmail(req.body.email, users);
+    const user = getUserByEmail(req.body.email, users);
     const pswdID = req.body.password;
-    if ( emailID == undefined ){
-      console.log("undefined");
     
-    }else if(emailID.password === pswdID){
-      res.cookie("user", emailID.email)
-      //console.log(emailID.email);
+    
+    if ( !user ){
+      res.status(403).send("Email not found");
+      return;
+    }else if(user.password !== pswdID){
+      res.status(403).send("Password incorrect");
+      return;
+      
+    }else {
+      res.cookie("user_id", user.email);
+      //console.log(user);
     } 
     
-   res.redirect("urls");
+
+    res.redirect('/urls');
    })
 
-  //go to registration page
+  //registration page get
   app.get("/register", (req,res) => {
     const templateVars = {
-      user: req.cookies["user"]
+      user_id: req.cookies["user_id"]
     };
     res.render("urls_register", templateVars);
   });
   
-  //users registration
+  ////registration page post
   app.post("/register", (req,res) => {
     const useremail = req.body.email;
     const pswd = req.body.password;
     const userID = generateRandomString(12);
-    //res.cookie("user", userID);
-    // users[userID] = {
-    //   id: userID,
-    //   email: useremail,
-    //   password: pswd
-    // }
+   
     const templateVars = {
-      user: req.cookies["user"],
+      user: req.cookies["user_id"],
       id: userID,
       email: useremail,
       password: pswd,
@@ -163,7 +169,7 @@ app.get("/urls.json", (req, res) => {
           email: useremail,
           password: pswd
         };
-        res.cookie("user", userID);
+      
         res.redirect('/urls');
       } else {
         res.status(400).send("Email already used");
@@ -173,18 +179,10 @@ app.get("/urls.json", (req, res) => {
     }
 
 
-
-
-
-
-    //console.log(templateVars);
-    //users[user] = pswd;
-    //res.render("urls_login", templateVars);
-    //res.redirect("urls");
   });
-
+//logout and clear cookie
   app.post("/logout", (req,res) => {
-    res.clearCookie("user", {path: '/'});
+    res.clearCookie("user_id", {path: '/'});
     res.redirect("urls");
   })
   
