@@ -74,7 +74,7 @@ app.get("/urls.json", (req, res) => {
       };
       res.render("urls_new", templateVars);
     }
-      res.redirect("/urls");
+      res.redirect("/login");
       return;
     
   })
@@ -102,15 +102,24 @@ app.get("/urls.json", (req, res) => {
     delete urlDatabase[req.params.id];
     res.redirect("/urls");
   })
-// edit url get
+
+
+  // edit url get
   app.get("/urls/:id/edit", (req,res) => {
-    const templateVars = { 
-      id: req.params.id, 
-      longURL: urlDatabase[req.params.id],
-      user_id: req.cookies["user_id"]
-     };
-    const longURL = urlDatabase.id;
-    res.render("urls_show", templateVars);
+    if( urlDatabase[req.params.id]){
+      const templateVars = { 
+            id: req.params.id, 
+            longURL: urlDatabase[req.params.id],
+            user_id: req.cookies["user_id"]
+          };
+      res.render("urls_show", templateVars);
+    } else {
+      res.status(403).send("ShortUrl not in Database")
+    }
+    
+    
+    
+    
     
   })
 // edit url post
