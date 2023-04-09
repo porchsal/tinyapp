@@ -68,11 +68,15 @@ app.get("/urls.json", (req, res) => {
   });
 //new url page get
   app.get("/urls/new", (req,res) => {
-    const templateVars = {
+    if(req.cookies["user_id"]){
+      const templateVars = {
       user_id: req.cookies["user_id"],
-      
-  };
-    res.render("urls_new", templateVars);
+      };
+      res.render("urls_new", templateVars);
+    }
+      res.redirect("/urls");
+      return;
+    
   })
 
 // create new tinyurl
@@ -85,7 +89,10 @@ app.get("/urls.json", (req, res) => {
   
   
   app.get("/urls/:id", (req, res) => {
-    const templateVars = { id: req.params.id, longURL: urlDatabase[req.params.id] };
+    const templateVars = { 
+      id: req.params.id, 
+      longURL: urlDatabase[req.params.id] 
+    };
     res.render("urls_show", templateVars);
   });
 
@@ -113,6 +120,13 @@ app.get("/urls.json", (req, res) => {
   })
 //login page get
   app.get("/login", (req,res) => {
+    //check if user is logged then send to urls
+    if(req.cookies["user_id"]){
+      res.redirect("urls");
+      return;
+    }
+    
+    
     const templateVars = {
       user_id: req.cookies["user_id"]
     };
@@ -133,7 +147,7 @@ app.get("/urls.json", (req, res) => {
       
     }else {
       res.cookie("user_id", user.email);
-      //console.log(user);
+      
     } 
     
 
@@ -142,26 +156,29 @@ app.get("/urls.json", (req, res) => {
 
   //registration page get
   app.get("/register", (req,res) => {
+    //check if user is logged then send to urls
+    if(req.cookies["user_id"]){
+      res.redirect("urls");
+      return;
+    };
+    
+    
+    
     const templateVars = {
       user_id: req.cookies["user_id"]
     };
     res.render("urls_register", templateVars);
   });
   
-  ////registration page post
+  //registration page post
   app.post("/register", (req,res) => {
     const useremail = req.body.email;
     const pswd = req.body.password;
     const userID = generateRandomString(12);
    
-    const templateVars = {
-      user: req.cookies["user_id"],
-      id: userID,
-      email: useremail,
-      password: pswd,
-      
-    };
     if( req.body.email && req.body.password ) {
+
+  //check if the user is in users database
       if(!getUserByEmail(req.body.email, users)){
         const userID = generateRandomString(12);
         users[userID] = {
