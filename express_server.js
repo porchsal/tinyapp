@@ -9,23 +9,37 @@ app.set("view engine", "ejs");
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-const urlDatabase = {
-  "b2xVn2": "http://www.lighthouselabs.ca",
-  "9sm5xK": "http://www.google.com"
+// const urlDatabase = {
+//   "b2xVn2": "http://www.lighthouselabs.ca",
+//   "9sm5xK": "http://www.google.com"
 
+// };
+
+const urlDatabase = {
+  b6UTxQ: {
+    longURL: "http://www.lighthouselabs.ca",
+    userID: "b2xVn2",
+  },
+  i3BoGr: {
+    longURL: "http://www.google.com",
+    userID: "s9m5xK",
+  },
+  a1b2c3:{
+    longURL: "htt[://www.cloud.com",
+    userID: "s9m5xK"
+  }
 };
 
+
 const users = {
-  userRandomID: {
-    id: "userRandomID",
+  b2xVn2: {
     email: "user@example.com",
-    password: "purple-monkey-dinosaur",
+    password: "purple-monkey-dinosaur"
   },
-  user2RandomID: {
-    id: "user2RandomID",
+   s9m5xK: {
     email: "user2@example.com",
-    password: "dishwasher-funk",
-  },
+    password: "dishwasher-funk"
+  }
 };
 
 const generateRandomString = function(str){
@@ -34,11 +48,29 @@ const generateRandomString = function(str){
 
 const getUserByEmail = function(email, usersDB) {
   for (const user in usersDB){
-    if(users[user].email === email) {
+    if(usersDB[user].email === email) {
       return usersDB[user]
     }
   }
   return undefined;
+}
+const getUserIDByEmail = function(email, usersDB) {
+  for (const user in usersDB){
+    if(usersDB[user].email === email) {
+      return user;
+    }
+  }
+  return undefined;
+}
+const urlForUser = function(id) {
+  let userUrls = {};
+  //const userID = getUserIDByEmail(id, users);
+  for(const shortURL in urlDatabase){
+    if(urlDatabase[shortURL].userID === id){
+      userUrls[shortURL] = urlDatabase[shortURL];
+    }
+  }
+  return userUrls;
 }
 
 
@@ -60,12 +92,26 @@ app.get("/urls.json", (req, res) => {
   });
 //list of urls get
   app.get("/urls", (req, res) => {
-    const templateVars = {
-        user_id: req.cookies["user_id"],
-        urls: urlDatabase
-    };
-    res.render("urls_index", templateVars);
+    if(req.cookies["user_id"]){
+      const userID = getUserIDByEmail(req.cookies["user_id"], users);
+      const userUrl = urlForUser(userID)
+      
+      
+      const templateVars = {
+      user_id: req.cookies["user_id"],
+      urls: userUrl
+      };
+      console.log(userID);
+      res.render("urls_index", templateVars);
+    } else {
+      //res.status(403).send("You mus be logged in ");
+      res.redirect("/login");
+      return;
+      }
+      
   });
+
+  
 //new url page get
   app.get("/urls/new", (req,res) => {
     if(req.cookies["user_id"]){
@@ -73,25 +119,29 @@ app.get("/urls.json", (req, res) => {
       user_id: req.cookies["user_id"],
       };
       res.render("urls_new", templateVars);
-    }
+    } else {
+      //res.status(403).send("You mus be logged in ");
       res.redirect("/login");
       return;
-    
+      }
+
   })
 
 // create new tinyurl
   app.post("/urls", (req,res) => {
     const longURL = req.body.longURL;
     const shortURL = generateRandomString(8);
-    urlDatabase[shortURL] = longURL;
-    res.redirect("/urls");  
+    const userID = generateRandomString(8);
+    urlDatabase[shortURL] = {longURL, userID};
+    res.redirect("/urls");
+      
   });
   
   
   app.get("/urls/:id", (req, res) => {
     const templateVars = { 
       id: req.params.id, 
-      longURL: urlDatabase[req.params.id] 
+      longURL: urlDatabase[req.params.id]
     };
     res.render("urls_show", templateVars);
   });
@@ -109,9 +159,11 @@ app.get("/urls.json", (req, res) => {
     if( urlDatabase[req.params.id]){
       const templateVars = { 
             id: req.params.id, 
-            longURL: urlDatabase[req.params.id],
+            longURL: urlDatabase[req.params.id].longURL,
+            userID: urlDatabase[req.params.id].userID,
             user_id: req.cookies["user_id"]
           };
+          console.log(req.params.id);
       res.render("urls_show", templateVars);
     } else {
       res.status(403).send("ShortUrl not in Database")
@@ -122,9 +174,17 @@ app.get("/urls.json", (req, res) => {
     
     
   })
-// edit url post
+//edit url post
   app.post("/urls/:id/edit", (req,res) => {
+    //const temp = req.params.id;
+    //urlDatabase[temp] = {
+      const longURL = req.body.newURL;
+      
+    //}
     
+    //const longURL = req.body.newURL;
+    console.log(longURL);
+    //urlDatabase[req.body.longURL].longURL
     res.redirect("/urls");
   })
 //login page get
