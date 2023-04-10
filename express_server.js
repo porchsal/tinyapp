@@ -110,10 +110,10 @@ app.get("/urls.json", (req, res) => {
   app.post("/urls", (req,res) => {
     const longURL = req.body.longURL;
     const shortURL = generateRandomString(8);
-    const userID = getUserIDByEmail(req.params.id, users);
+    const userID = getUserIDByEmail(req.session.user_id, users);
     urlDatabase[shortURL] = {longURL, userID};
     res.redirect("/urls");
-    console.log(userID);  
+   
   });
   
   
@@ -133,7 +133,7 @@ app.get("/urls.json", (req, res) => {
   })
 
 
-  // edit url get
+  //edit url get
   app.get("/urls/:id/edit", (req,res) => {
     if( urlDatabase[req.params.id]){
       const templateVars = { 
@@ -155,15 +155,8 @@ app.get("/urls.json", (req, res) => {
   })
 //edit url post
   app.post("/urls/:id/edit", (req,res) => {
-    //const temp = req.params.id;
-    //urlDatabase[temp] = {
-      const longURL = req.body.newURL;
-      
-    //}
-    
-    //const longURL = req.body.newURL;
-    console.log(longURL);
-    //urlDatabase[req.body.longURL].longURL
+    const shortUrl = req.params.url;
+    urlDatabase[shortUrl].longURL = req.body.updatedURL;
     res.redirect("/urls");
   })
 //login page get
