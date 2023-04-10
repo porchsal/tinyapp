@@ -4,11 +4,9 @@ const cookieSession = require('cookie-session');
 const app = express();
 const PORT = 8080; // default port 8080
 const bcrypt = require("bcryptjs");
-
+const { generateRandomString, getUserByEmail, urlForUser } = require('./helpers');
 app.set("view engine", "ejs");
 
-// app.use(express.urlencoded({ extended: true }));
-// app.use(cookieParser());
 app.use(express.urlencoded({extended: true}));
 app.use(
   cookieSession({
@@ -17,13 +15,6 @@ app.use(
   })
 );
 
-
-
-// const urlDatabase = {
-//   "b2xVn2": "http://www.lighthouselabs.ca",
-//   "9sm5xK": "http://www.google.com"
-
-// };
 
 const urlDatabase = {
   b6UTxQ: {
@@ -52,18 +43,7 @@ const users = {
   }
 };
 
-const generateRandomString = function(str){
-    return Math.random().toString(20).slice(2, str);
-}
 
-const getUserByEmail = function(email, usersDB) {
-  for (const user in usersDB){
-    if(usersDB[user].email === email) {
-      return usersDB[user];
-    }
-  }
-  return undefined;
-}
 const getUserIDByEmail = function(email, usersDB) {
   for (const user in usersDB){
     if(usersDB[user].email === email) {
@@ -72,16 +52,7 @@ const getUserIDByEmail = function(email, usersDB) {
   }
   return undefined;
 }
-const urlForUser = function(id) {
-  let userUrls = {};
-  //const userID = getUserIDByEmail(id, users);
-  for(const shortURL in urlDatabase){
-    if(urlDatabase[shortURL].userID === id){
-      userUrls[shortURL] = urlDatabase[shortURL];
-    }
-  }
-  return userUrls;
-}
+
 
 
 app.get("/", (req, res) => {
@@ -104,7 +75,7 @@ app.get("/urls.json", (req, res) => {
   app.get("/urls", (req, res) => {
     if(req.session.user_id){
       const userID = getUserIDByEmail(req.session.user_id, users);
-      const userUrl = urlForUser(userID)
+      const userUrl = urlForUser(userID, urlDatabase)
       
       
       const templateVars = {
@@ -114,7 +85,6 @@ app.get("/urls.json", (req, res) => {
       console.log(userID);
       res.render("urls_index", templateVars);
     } else {
-      //res.status(403).send("You mus be logged in ");
       res.redirect("/login");
       return;
       }
@@ -130,7 +100,6 @@ app.get("/urls.json", (req, res) => {
       };
       res.render("urls_new", templateVars);
     } else {
-      //res.status(403).send("You mus be logged in ");
       res.redirect("/login");
       return;
       }
@@ -142,7 +111,6 @@ app.get("/urls.json", (req, res) => {
     const longURL = req.body.longURL;
     const shortURL = generateRandomString(8);
     const userID = getUserIDByEmail(req.params.id, users);
-    //const userID = generateRandomString(8);
     urlDatabase[shortURL] = {longURL, userID};
     res.redirect("/urls");
     console.log(userID);  
@@ -226,7 +194,6 @@ app.get("/urls.json", (req, res) => {
       return;
       
     }else {
-      //res.cookie("user_id", user.email);
       req.session.user_id = user.email;
     } 
     
@@ -279,7 +246,6 @@ app.get("/urls.json", (req, res) => {
   });
 //logout and clear cookie
   app.post("/logout", (req,res) => {
-    //res.clearCookie("user_id", {path: '/'});
     req.session = null;
     res.redirect("urls");
   })
