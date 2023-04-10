@@ -1,13 +1,23 @@
 const express = require('express');
 const cookieParser = require('cookie-parser');
+const cookieSession = require('cookie-session');
 const app = express();
 const PORT = 8080; // default port 8080
 const bcrypt = require("bcryptjs");
 
 app.set("view engine", "ejs");
 
-app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
+// app.use(express.urlencoded({ extended: true }));
+// app.use(cookieParser());
+app.use(express.urlencoded({extended: true}));
+app.use(
+  cookieSession({
+    name: 'session',
+    keys: ['e1d50c4f-538a-4682-89f4-c002f10a59c8', '2d310699-67d3-4b26-a3a4-1dbf2b67be5c'],
+  })
+);
+
+
 
 // const urlDatabase = {
 //   "b2xVn2": "http://www.lighthouselabs.ca",
@@ -92,13 +102,13 @@ app.get("/urls.json", (req, res) => {
   });
 //list of urls get
   app.get("/urls", (req, res) => {
-    if(req.cookies["user_id"]){
-      const userID = getUserIDByEmail(req.cookies["user_id"], users);
+    if(req.session.user_id){
+      const userID = getUserIDByEmail(req.session.user_id, users);
       const userUrl = urlForUser(userID)
       
       
       const templateVars = {
-      user_id: req.cookies["user_id"],
+      user_id: req.session.user_id,
       urls: userUrl
       };
       console.log(userID);
@@ -114,9 +124,9 @@ app.get("/urls.json", (req, res) => {
   
 //new url page get
   app.get("/urls/new", (req,res) => {
-    if(req.cookies["user_id"]){
+    if(req.session.user_id){
       const templateVars = {
-      user_id: req.cookies["user_id"],
+      user_id: req.session.user_id,
       };
       res.render("urls_new", templateVars);
     } else {
@@ -131,7 +141,7 @@ app.get("/urls.json", (req, res) => {
   app.post("/urls", (req,res) => {
     const longURL = req.body.longURL;
     const shortURL = generateRandomString(8);
-    const userID = getUserIDByEmail(req.cookies["user_id"], users);
+    const userID = getUserIDByEmail(req.params.id, users);
     //const userID = generateRandomString(8);
     urlDatabase[shortURL] = {longURL, userID};
     res.redirect("/urls");
@@ -162,7 +172,7 @@ app.get("/urls.json", (req, res) => {
             id: req.params.id, 
             longURL: urlDatabase[req.params.id].longURL,
             userID: urlDatabase[req.params.id].userID,
-            user_id: req.cookies["user_id"]
+            user_id: req.session.user_id
           };
           console.log(req.params.id);
       res.render("urls_show", templateVars);
@@ -191,14 +201,14 @@ app.get("/urls.json", (req, res) => {
 //login page get
   app.get("/login", (req,res) => {
     //check if user is logged then send to urls
-    if(req.cookies["user_id"]){
+    if(req.session.user_id){
       res.redirect("urls");
       return;
     }
     
     
     const templateVars = {
-      user_id: req.cookies["user_id"]
+      user_id: req.session.user_id
     };
     res.render("urls_login", templateVars);
   })
@@ -216,8 +226,8 @@ app.get("/urls.json", (req, res) => {
       return;
       
     }else {
-      res.cookie("user_id", user.email);
-      
+      //res.cookie("user_id", user.email);
+      req.session.user_id = user.email;
     } 
     
 
@@ -227,7 +237,7 @@ app.get("/urls.json", (req, res) => {
   //registration page get
   app.get("/register", (req,res) => {
     //check if user is logged then send to urls
-    if(req.cookies["user_id"]){
+    if(req.session.user_id){
       res.redirect("urls");
       return;
     };
@@ -235,7 +245,7 @@ app.get("/urls.json", (req, res) => {
     
     
     const templateVars = {
-      user_id: req.cookies["user_id"]
+      user_id: req.session.user_id
     };
     res.render("urls_register", templateVars);
   });
@@ -269,7 +279,8 @@ app.get("/urls.json", (req, res) => {
   });
 //logout and clear cookie
   app.post("/logout", (req,res) => {
-    res.clearCookie("user_id", {path: '/'});
+    //res.clearCookie("user_id", {path: '/'});
+    req.session = null;
     res.redirect("urls");
   })
   
