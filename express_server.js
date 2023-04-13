@@ -43,7 +43,14 @@ const users = {
 };
 
 app.get("/", (req, res) => {
-  res.send("Hello!");
+  if (req.session.user_id) {
+    res.redirect("urls");
+    return;
+  }
+  const templateVars = {
+    user_id: req.session.user_id
+  };
+  res.render("urls_login", templateVars);
 });
 
 app.listen(PORT, () => {
@@ -62,8 +69,9 @@ app.get("/urls", (req, res) => {
     };
     res.render("urls_index", templateVars);
   } else {
-    res.redirect("/login");
-    return;
+    const errorMessage = "You must Log in to check Urls";
+    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
+    //res.redirect("/login");
   }
       
 });
@@ -77,8 +85,8 @@ app.get("/urls/new", (req,res) => {
     };
     res.render("urls_new", templateVars);
   } else {
-    res.redirect("/login");
-    return;
+    const errorMessage = "You must be logged in to create new Short Url";
+    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
   }
 
 });
@@ -121,16 +129,28 @@ app.get("/urls/:id/edit", (req,res) => {
     };
     res.render("urls_show", templateVars);
   } else {
-    res.status(403).send("ShortUrl not in Database");
+    const errorMessage = "Url not in database";
+    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
   }
     
 });
 //edit url post
 app.post("/urls/:id/edit", (req,res) => {
   const shortUrl = req.params.id;
-  urlDatabase[shortUrl].longURL = req.body.newURL;
-  res.redirect("/urls");
+ 
+  if(urlDatabase[shortUrl].userID === req.session.user_id) {
+    
+    urlDatabase[shortUrl].longURL = req.body.newURL;
+    res.redirect("/urls");
+  } else {
+    const errorMessage = "Url not belong to user, can't update";
+    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
+
+  }
+  
+
 });
+
 //login page get
 app.get("/login", (req,res) => {
   //check if user is logged then send to urls
@@ -142,16 +162,21 @@ app.get("/login", (req,res) => {
     user_id: req.session.user_id
   };
   res.render("urls_login", templateVars);
+  // const errorMessage = "User must log in to check Urls";
+  //   res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
 });
+
 //login page post
 app.post("/login", (req, res) => {
   const user = getUserByEmail(req.body.email, users);
   const pswdID = req.body.password;
   if (!user) {
-    res.status(403).send("Email not found");
-    return;
+    const errorMessage = "Email not found";
+    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
   } else if (!bcrypt.compareSync(pswdID, user.password)) {
-    res.status(403).send("Password incorrect");
+      const errorMessage = 'Password incorrect.';
+      res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
+    
     return;
       
   } else {
@@ -190,10 +215,12 @@ app.post("/register", (req,res) => {
       
       res.redirect('/urls');
     } else {
-      res.status(400).send("Email already used");
+      const errorMessage = "Email already used";
+    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
     }
   } else {
-    res.status(400).send("Empty user name or password");
+    const errorMessage = "Empty user name or password";
+    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
   }
 
 
@@ -201,6 +228,6 @@ app.post("/register", (req,res) => {
 //logout and clear cookie
 app.post("/logout", (req,res) => {
   req.session = null;
-  res.redirect("urls");
+  res.redirect("/login");
 });
   
