@@ -16,7 +16,7 @@ const testUsers = {
 };
 
 describe('getUserByEmail', function() {
-  it('should return a user with valid email', function() {
+  it('should return a user with valid email', () => {
     const user = getUserByEmail("user@example.com", testUsers).id;
     const expectedUserID = "userRandomID";
     // Write your assert statement here
