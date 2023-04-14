@@ -71,7 +71,7 @@ app.get("/urls", (req, res) => {
   } else {
     const errorMessage = "You must Log in to check Urls";
     res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
-    //res.redirect("/login");
+    
   }
       
 });
@@ -103,11 +103,17 @@ app.post("/urls", (req,res) => {
   
 // list of urls by user logged
 app.get("/urls/:id", (req, res) => {
-  const templateVars = {
+  if (!req.session.user_id) {
+    const errorMessage = "You must be logged in to edit Url";
+    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
+  } else {
+    const templateVars = {
     id: req.params.id,
-    longURL: urlDatabase[req.params.id]
-  };
-  res.render("urls_show", templateVars);
+    longURL: urlDatabase[req.params.id].longURL,
+    user_id: req.session.user_id
+    };
+    res.render("urls_show", templateVars);
+  }
 });
 
   
@@ -138,7 +144,7 @@ app.get("/urls/:id/edit", (req,res) => {
 app.post("/urls/:id/edit", (req,res) => {
   const shortUrl = req.params.id;
  
-  if(urlDatabase[shortUrl].userID === req.session.user_id) {
+  if (urlDatabase[shortUrl].userID === req.session.user_id) {
     
     urlDatabase[shortUrl].longURL = req.body.newURL;
     res.redirect("/urls");
@@ -174,8 +180,8 @@ app.post("/login", (req, res) => {
     const errorMessage = "Email not found";
     res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
   } else if (!bcrypt.compareSync(pswdID, user.password)) {
-      const errorMessage = 'Password incorrect.';
-      res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
+    const errorMessage = 'Password incorrect.';
+    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
     
     return;
       
@@ -216,7 +222,7 @@ app.post("/register", (req,res) => {
       res.redirect('/urls');
     } else {
       const errorMessage = "Email already used";
-    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
+      res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
     }
   } else {
     const errorMessage = "Empty user name or password";
