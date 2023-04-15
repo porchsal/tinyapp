@@ -69,7 +69,7 @@ app.get("/urls", (req, res) => {
     };
     res.render("urls_index", templateVars);
   } else {
-    const errorMessage = "You must Log in to check Urls";
+    const errorMessage = "You must be logged in to check Urls";
     res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
     
   }
@@ -143,18 +143,16 @@ app.get("/urls/:id/edit", (req,res) => {
 //edit url post
 app.post("/urls/:id/edit", (req,res) => {
   const shortUrl = req.params.id;
- 
-  if (urlDatabase[shortUrl].userID === req.session.user_id) {
+  const owner = getUserIDByEmail(req.session.user_id, users);
+  if (urlDatabase[shortUrl].userID === owner) {
     
     urlDatabase[shortUrl].longURL = req.body.newURL;
     res.redirect("/urls");
   } else {
-    const errorMessage = "Url not belong to user, can't update";
+    const errorMessage = "Url doesn't belong to user, can't update";
     res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
 
   }
-  
-
 });
 
 //login page get
@@ -168,8 +166,7 @@ app.get("/login", (req,res) => {
     user_id: req.session.user_id
   };
   res.render("urls_login", templateVars);
-  // const errorMessage = "User must log in to check Urls";
-  //   res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
+  
 });
 
 //login page post
@@ -219,7 +216,7 @@ app.post("/register", (req,res) => {
         password: pswd
       };
       
-      res.redirect('/urls');
+      res.redirect("/login");
     } else {
       const errorMessage = "Email already used";
       res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
