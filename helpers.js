@@ -8,7 +8,6 @@ const getUserByEmail = function(email, usersDB) {
       return usersDB[user];
     }
   }
-  return undefined;
 };
 
 const getUserIDByEmail = function(email, usersDB) {
@@ -22,11 +21,10 @@ const getUserIDByEmail = function(email, usersDB) {
 
 
 const urlForUser = function(id, database) {
-  let userUrls = {};
-  //const userID = getUserIDByEmail(id, users);
+  const userUrls = {};
   for (const shortURL in database) {
     if (database[shortURL].userID === id) {
-      userUrls[shortURL] = database[shortURL];
+      userUrls[shortURL] = database[shortURL].longURL;
     }
   }
   return userUrls;
