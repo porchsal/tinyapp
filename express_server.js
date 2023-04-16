@@ -90,7 +90,6 @@ app.get("/urls/:id", (req,res) => {
     const errorMessage = "Url not in logged user database";
     res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
   }
-  console.log(urlDatabase[req.params.id]);
 });
 
 //edit url post
@@ -109,7 +108,6 @@ app.post("/urls/:id", (req,res) => {
 //redirect to the longUrl site
 app.get("/u/:id", (req,res) => {
   const shortUrl = req.params.id;
-  console.log(shortUrl);
   if(urlDatabase[shortUrl]){
     res.redirect(urlDatabase[shortUrl].longURL);
   }else {
