@@ -4,6 +4,7 @@ const app = express();
 const PORT = 8080; // default port 8080
 const bcrypt = require("bcryptjs");
 const { generateRandomString, getUserByEmail, urlForUser, getUserIDByEmail } = require('./helpers');
+const {urlDatabase, users} = require('./data');
 app.set("view engine", "ejs");
 
 app.use(express.urlencoded({extended: true}));
@@ -14,34 +15,6 @@ app.use(
   })
 );
 
-
-const urlDatabase = {
-  b6UTxQ: {
-    longURL: "http://www.lighthouselabs.ca",
-    userID: "b2xVn2",
-  },
-  i3BoGr: {
-    longURL: "http://www.google.com",
-    userID: "s9m5xK",
-  },
-  a1b2c3:{
-    longURL: "htt[://www.cloud.com",
-    userID: "s9m5xK"
-  }
-};
-
-
-const users = {
-  b2xVn2: {
-    email: "user@example.com",
-    password: bcrypt.hashSync("purple-monkey-dinosaur", 10)
-  },
-  s9m5xK: {
-    email: "user2@example.com",
-    password: bcrypt.hashSync("dishwasher-funk",10)
-  }
-};
-
 app.get("/", (req, res) => {
   if (req.session.user_id) {
     res.redirect("urls");
@@ -51,11 +24,6 @@ app.get("/", (req, res) => {
     user_id: req.session.user_id
   };
   res.render("urls_login", templateVars);
-});
-
-app.listen(PORT, () => {
-  console.log(`Example app listening at port ${PORT}`);
-
 });
 
 //list of urls get
@@ -71,12 +39,9 @@ app.get("/urls", (req, res) => {
   } else {
     const errorMessage = "You must be logged in to check Urls";
     res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
-    
   }
-      
 });
 
-  
 //new url page get
 app.get("/urls/new", (req,res) => {
   if (req.session.user_id) {
@@ -85,10 +50,13 @@ app.get("/urls/new", (req,res) => {
     };
     res.render("urls_new", templateVars);
   } else {
-    const errorMessage = "You must be logged in to create new Short Url";
-    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
+    // const errorMessage = "You must be logged in to create new Short Url";
+    // res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
+    const templateVars = {
+      user_id: req.session.user_id
+    };
+    res.render("urls_login", templateVars);
   }
-
 });
 
 // create new tinyurl
@@ -98,24 +66,7 @@ app.post("/urls", (req,res) => {
   const userID = getUserIDByEmail(req.session.user_id, users);
   urlDatabase[shortURL] = {longURL, userID};
   res.redirect("/urls");
-   
 });
-  
-// list of urls by user logged
-app.get("/urls/:id", (req, res) => {
-  if (!req.session.user_id) {
-    const errorMessage = "You must be logged in to edit Url";
-    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
-  } else {
-    const templateVars = {
-    id: req.params.id,
-    longURL: urlDatabase[req.params.id].longURL,
-    user_id: req.session.user_id
-    };
-    res.render("urls_show", templateVars);
-  }
-});
-
   
 // delete url from user logged
 app.post("/urls/:id/delete", (req,res) => {
@@ -123,35 +74,47 @@ app.post("/urls/:id/delete", (req,res) => {
   res.redirect("/urls");
 });
 
-
 //edit url get
-app.get("/urls/:id/edit", (req,res) => {
-  if (urlDatabase[req.params.id]) {
+app.get("/urls/:id", (req,res) => {
+  const shortUrl = req.params.id;
+  const owner = getUserIDByEmail(req.session.user_id, users);
+  if (urlDatabase[shortUrl].userID === owner && urlDatabase[req.params.id].userID) {
     const templateVars = {
-      id: req.params.id,
-      longURL: urlDatabase[req.params.id].longURL,
-      userID: urlDatabase[req.params.id].userID,
-      user_id: req.session.user_id
+    id: req.params.id,
+    longURL: urlDatabase[req.params.id].longURL,
+    userID: urlDatabase[req.params.id].userID,
+    user_id: req.session.user_id
     };
     res.render("urls_show", templateVars);
   } else {
-    const errorMessage = "Url not in database";
+    const errorMessage = "Url not in logged user database";
     res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
   }
-    
+  console.log(urlDatabase[req.params.id]);
 });
+
 //edit url post
-app.post("/urls/:id/edit", (req,res) => {
+app.post("/urls/:id", (req,res) => {
   const shortUrl = req.params.id;
   const owner = getUserIDByEmail(req.session.user_id, users);
-  if (urlDatabase[shortUrl].userID === owner) {
-    
+  if (urlDatabase[shortUrl].userID === owner && urlDatabase[req.params.id].userID) {
     urlDatabase[shortUrl].longURL = req.body.newURL;
     res.redirect("/urls");
   } else {
     const errorMessage = "Url doesn't belong to user, can't update";
     res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
+  }
+});
 
+//redirect to the longUrl site
+app.get("/u/:id", (req,res) => {
+  const shortUrl = req.params.id;
+  console.log(shortUrl);
+  if(urlDatabase[shortUrl]){
+    res.redirect(urlDatabase[shortUrl].longURL);
+  }else {
+    const errorMessage = "This shortUrl does not exists";
+    res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
   }
 });
 
@@ -166,7 +129,6 @@ app.get("/login", (req,res) => {
     user_id: req.session.user_id
   };
   res.render("urls_login", templateVars);
-  
 });
 
 //login page post
@@ -179,7 +141,6 @@ app.post("/login", (req, res) => {
   } else if (!bcrypt.compareSync(pswdID, user.password)) {
     const errorMessage = 'Password incorrect.';
     res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
-    
     return;
       
   } else {
@@ -215,8 +176,8 @@ app.post("/register", (req,res) => {
         email: useremail,
         password: pswd
       };
-      
-      res.redirect("/login");
+      req.session.user_id = users[userID].email;
+      res.redirect("/urls");
     } else {
       const errorMessage = "Email already used";
       res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
@@ -226,11 +187,14 @@ app.post("/register", (req,res) => {
     res.status(403).render('urls_error', {user_id: users[req.session.userID], errorMessage});
   }
 
-
 });
 //logout and clear cookie
 app.post("/logout", (req,res) => {
   req.session = null;
   res.redirect("/login");
 });
-  
+
+app.listen(PORT, () => {
+  console.log(`Example app listening at port ${PORT}`);
+
+});
